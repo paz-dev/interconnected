@@ -86,21 +86,20 @@ class MyDocument extends Document {
               }
               blockquote {
                 padding: 0 1em;
-                color: #555;
-                border-left: 0.25em solid #dfe2e5;
+  color: #555;
+  border-left: 0.25em solid #dfe2e5;
               }
               pre {
                 display:block;
-                overflow-x:auto;
-                padding:0.5em;
-                background:#FFF;
-                color: #000;
-                border: 1px solid #ddd;
-                font-size: 14px;
+  overflow-x:auto;
+  padding:0.5em;
+  background:#FFF;
+  color: #000;
+  border: 1px solid #ddd;
+  font-size: 14px;
               }
               code {
                 font-size: 14px;
-                background: #FFF;
               }
             `}
           </style>
