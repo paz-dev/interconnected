@@ -3,15 +3,30 @@ import Link from 'next/link';
 import Toolbar from '@mui/material/Toolbar';
 import Grid from '@mui/material/Grid';
 import Avatar from '@mui/material/Avatar';
-
+import Button from '@mui/material/Button';
+import Hidden from '@mui/material/Hidden';
 import MenuWithAvatar from './MenuWithAvatar';
-
 import { styleToolbar } from './SharedStyles';
+/* import { user } from '../server/models/User'; */
 
-const optionsMenu = [
+const optionsMenuCustomer = [
   {
-    text: 'Got question?',
-    href: 'https://github.com/async-labs/builderbook/issues',
+    text: 'My books',
+    href: '/customer/my-books',
+    as: '/my-books',
+  },
+  {
+    text: 'Log out',
+    href: '/logout',
+    anchor: true,
+  },
+];
+
+const optionsMenuAdmin = [
+  {
+    text: 'Admin',
+    href: '/admin',
+    as: '/admin',
   },
   {
     text: 'Log out',
@@ -24,6 +39,8 @@ const propTypes = {
   user: PropTypes.shape({
     avatarUrl: PropTypes.string,
     displayName: PropTypes.string,
+    isAdmin: PropTypes.bool,
+    isGithubConnected: PropTypes.bool,
   }),
 };
 
@@ -35,35 +52,51 @@ function Header({ user }) {
   return (
     <div>
       <Toolbar style={styleToolbar}>
-        <Grid container direction="row" justifyContent="space-around" alignItems="center">
-          <Grid item sm={11} xs={9} style={{ textAlign: 'left' }}>
-            {user ? null : (
-              <Link href="/">
-                <Avatar
-                  src="https://storage.googleapis.com/builderbook/logo.svg"
-                  alt="Builder Book logo"
-                  style={{ margin: '0px auto 0px 20px', cursor: 'pointer' }}
+        <Grid item sm={9} xs={8} style={{ textAlign: 'left' }}>
+          {!user ? (
+            <Link href="/">
+              <Avatar
+                src="https://storage.googleapis.com/builderbook/logo.svg"
+                alt="Builder Book logo"
+                style={{ margin: '0px auto 0px 20px', cursor: 'pointer' }}
+              />
+            </Link>
+          ) : null}
+        </Grid>
+        <Grid item sm={2} xs={2} style={{ textAlign: 'right' }}>
+          {user && user.isAdmin && !user.isGithubConnected ? (
+            <Hidden mdDown>
+              <a href="/auth/github">
+                <Button variant="contained" color="primary">
+                  Connect Github
+                </Button>
+              </a>
+            </Hidden>
+          ) : null}
+        </Grid>
+        <Grid item sm={1} xs={2} style={{ textAlign: 'right' }}>
+          {user ? (
+            <div style={{ whiteSpace: 'nowrap' }}>
+              {!user.isAdmin ? (
+                <MenuWithAvatar
+                  options={optionsMenuCustomer}
+                  src={user.avatarUrl}
+                  alt={user.displayName}
                 />
-              </Link>
-            )}
-          </Grid>
-          <Grid item sm={1} xs={3} style={{ textAlign: 'right' }}>
-            {user ? (
-              <div style={{ whiteSpace: ' nowrap' }}>
-                {user.avatarUrl ? (
-                  <MenuWithAvatar
-                    options={optionsMenu}
-                    src={user.avatarUrl}
-                    alt={user.displayName}
-                  />
-                ) : null}
-              </div>
-            ) : (
-              <Link href="/public/login" as="/login">
-                <a style={{ margin: '0px 20px 0px auto' }}>Log in</a>
-              </Link>
-            )}
-          </Grid>
+              ) : null}
+              {user.isAdmin ? (
+                <MenuWithAvatar
+                  options={optionsMenuAdmin}
+                  src={user.avatarUrl}
+                  alt={user.displayName}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <Link href="/public/login" as="/login">
+              <a style={{ margin: '0px 20px 0px auto' }}>Log in</a>
+            </Link>
+          )}
         </Grid>
       </Toolbar>
     </div>
