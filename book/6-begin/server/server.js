@@ -1,3 +1,5 @@
+/* import routesWithSlug from './routesWithSlug'; */
+
 const express = require('express');
 const session = require('express-session');
 const mongoSessionStore = require('connect-mongo');
@@ -5,9 +7,10 @@ const next = require('next');
 const mongoose = require('mongoose');
 
 const setupGoogle = require('./google');
+const setupGithub = require('./github');
 const api = require('./api');
 const { insertTemplates } = require('./models/EmailTemplate');
-
+const { routesWithSlug } = require('./routesWithSlug');
 require('dotenv').config();
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -56,7 +59,9 @@ app.prepare().then(async () => {
   await insertTemplates();
 
   setupGoogle({ server, ROOT_URL });
+  setupGithub({ server, ROOT_URL });
   api(server);
+  routesWithSlug({ server, app });
 
   server.get('/books/:bookSlug/:chapterSlug', (req, res) => {
     const { bookSlug, chapterSlug } = req.params;

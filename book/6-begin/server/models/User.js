@@ -36,16 +36,41 @@ const mongoSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  isGithubConnected: {
+    type: Boolean,
+    default: false,
+  },
+  githubAccessToken: {
+    type: String,
+  },
+  githubId: {
+    type: String,
+    unique: true,
+  },
+  githubUsername: {
+    type: String,
+    unique: true,
+  },
   displayName: String,
   avatarUrl: String,
 });
 
 class UserClass {
   static publicFields() {
-    return ['id', 'displayName', 'email', 'avatarUrl', 'slug', 'isAdmin'];
+    return ['id', 'displayName', 'email', 'avatarUrl', 'slug', 'isAdmin', 'isGithubConnected'];
   }
 
-  static async signInOrSignUp({ googleId, email, googleToken, displayName, avatarUrl }) {
+  static async signInOrSignUp({
+    googleId,
+    email,
+    googleToken,
+    displayName,
+    avatarUrl,
+    isGithubConnected,
+    githubAccessToken,
+    githubId,
+    githubUsername,
+  }) {
     const user = await this.findOne({ googleId }).select(UserClass.publicFields().join(' '));
 
     if (user) {
@@ -79,6 +104,10 @@ class UserClass {
       displayName,
       avatarUrl,
       slug,
+      isGithubConnected,
+      githubAccessToken,
+      githubId,
+      githubUsername,
       isAdmin: userCount === 0,
     });
 
