@@ -3,12 +3,14 @@ import PropTypes from 'prop-types';
 import Error from 'next/error';
 import Head from 'next/head';
 import throttle from 'lodash/throttle';
-
 import Link from 'next/link';
+import { withRouter } from 'next/router';
+import BuyButton from '../../components/customer/BuyButton';
 
 import Header from '../../components/Header';
 
 import { getChapterDetailApiMethod } from '../../lib/api/public';
+
 import withAuth from '../../lib/withAuth';
 
 const styleIcon = {
@@ -26,6 +28,9 @@ const propTypes = {
   user: PropTypes.shape({
     _id: PropTypes.string.isRequired,
   }),
+  router: PropTypes.shape({
+    asPath: PropTypes.string.isRequired,
+  }).isRequired,
 };
 
 const defaultProps = {
@@ -40,8 +45,10 @@ class ReadChapter extends React.Component {
     const { chapter } = props;
 
     let htmlContent = '';
-    if (chapter) {
+    if (chapter && (chapter.isPurchased || chapter.isFree)) {
       htmlContent = chapter.htmlContent;
+    } else {
+      htmlContent = chapter.htmlExcerpt;
     }
 
     this.state = {
@@ -61,13 +68,25 @@ class ReadChapter extends React.Component {
     if (this.state.isMobile !== isMobile) {
       this.setState({ isMobile }); // eslint-disable-line
     }
+
+    if (this.props.checkoutCanceled) {
+      notify('Checkout canceled.');
+    }
+
+    if (this.props.error) {
+      notify(this.props.error);
+    }
   }
 
   componentDidUpdate(prevProps) {
     if (prevProps.chapter && prevProps.chapter._id !== this.props.chapter._id) {
       document.getElementById('chapter-content').scrollIntoView();
-
-      const { htmlContent } = this.props.chapter;
+      let htmlContent = '';
+      if (prevProps.chapter && (prevProps.chapter.isPurchased || prevProps.chapter.isFree)) {
+        htmlContent = this.props.chapter.htmlContent;
+      } else {
+        htmlContent = this.props.chapter.htmlExcerpt;
+      }
 
       // eslint-disable-next-line
       this.setState({ chapter: this.props.chapter, htmlContent });
@@ -132,7 +151,7 @@ class ReadChapter extends React.Component {
   };
 
   static async getInitialProps(ctx) {
-    const { bookSlug, chapterSlug } = ctx.query;
+    const { bookSlug, chapterSlug, buy, checkout_canceled, error } = ctx.query;
     const { req } = ctx;
 
     const headers = {};
@@ -140,9 +159,11 @@ class ReadChapter extends React.Component {
       headers.cookie = req.headers.cookie;
     }
 
-    const chapter = await getChapterDetailApiMethod({ bookSlug, chapterSlug }, { headers });
+    const chapter = await getChapterDetail({ bookSlug, chapterSlug }, { headers });
 
-    return { chapter };
+    const redirectToCheckout = !!buy;
+
+    return { chapter, redirectToCheckout, checkoutCanceled: !!checkout_canceled, error };
   }
 
   toggleChapterList = () => {
@@ -169,10 +190,16 @@ class ReadChapter extends React.Component {
           {chapter.order > 1 ? `Chapter ${chapter.order - 1}: ` : null}
           {chapter.title}
         </h2>
+        {!chapter.isPurchased && !chapter.isFree ? (
+          <BuyButton user={user} book={book} redirectToCheckout={redirectToCheckout} />
+        ) : null}
         <div
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
+        {!chapter.isPurchased && !chapter.isFree ? (
+          <BuyButton user={user} book={book} redirectToCheckout={redirectToCheckout} />
+        ) : null}
       </div>
     );
   }
@@ -258,7 +285,7 @@ class ReadChapter extends React.Component {
   }
 
   render() {
-    const { user } = this.props;
+    const { user, router } = this.props;
 
     const { chapter, showTOC, hideHeader, isMobile } = this.state;
 
@@ -284,7 +311,7 @@ class ReadChapter extends React.Component {
           ) : null}
         </Head>
 
-        <Header user={user} hideHeader={hideHeader} />
+        <Header user={user} hideHeader={hideHeader} redirectUrl={router.asPath} />
 
         {this.renderSidebar()}
 
@@ -332,4 +359,6 @@ class ReadChapter extends React.Component {
 ReadChapter.propTypes = propTypes;
 ReadChapter.defaultProps = defaultProps;
 
-export default withAuth(ReadChapter, { loginRequired: false });
+export default withAuth(withRouter(ReadChapter), {
+  loginRequired: false,
+});
