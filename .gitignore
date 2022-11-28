@@ -1,7 +1,6 @@
 *~
 *.swp
 tmp/
-npm-debug.log
 .DS_Store
 
 
